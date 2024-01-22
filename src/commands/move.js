@@ -3,6 +3,7 @@ const {
   ChannelType,
   Colors,
   EmbedBuilder,
+  PermissionsBitField,
 } = require("discord.js");
 const { model } = require("mongoose");
 const TicketSchema = require("../Schemas/TicketSchema");
@@ -149,5 +150,27 @@ module.exports = {
       });
     const user = await client.users.fetch(ticket.user).catch(() => {});
     if (user) await user.send({ embeds: [movedEmbed] }).catch(() => {});
+
+    // Fix permissions
+    const permissions = [
+      {
+        id: interaction.guild.id,
+        deny: [PermissionsBitField.Flags.ViewChannel],
+      },
+      {
+        id: settings.data.ticketRole,
+        allow: [PermissionsBitField.Flags.ViewChannel],
+      },
+    ];
+    ticket.canView.forEach(async (user) => {
+      const userExist = interaction.guild.members.fetch(user).catch(() => {});
+      if (userExist)
+        permissions.push({
+          id: user,
+          allow: [PermissionsBitField.Flags.ViewChannel],
+        });
+    });
+
+    await interaction.channel.permissionOverwrites.set(permissions);
   },
 };

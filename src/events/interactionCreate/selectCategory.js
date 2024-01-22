@@ -7,6 +7,7 @@ const {
   EmbedBuilder,
   Colors,
   ActionRowBuilder,
+  PermissionsBitField,
 } = require("discord.js");
 const TicketSchema = require("../../Schemas/TicketSchema");
 
@@ -105,6 +106,28 @@ module.exports = {
           iconURL: interaction.guild.iconURL(),
         });
       await interaction.channel.setParent(category.id);
+
+      // Fix permissions
+      const permissions = [
+        {
+          id: interaction.guild.id,
+          deny: [PermissionsBitField.Flags.ViewChannel],
+        },
+        {
+          id: settings.data.ticketRole,
+          allow: [PermissionsBitField.Flags.ViewChannel],
+        },
+      ];
+      ticket.canView.forEach(async (user) => {
+        const userExist = interaction.guild.members.fetch(user).catch(() => {});
+        if (userExist)
+          permissions.push({
+            id: user,
+            allow: [PermissionsBitField.Flags.ViewChannel],
+          });
+      });
+
+      await interaction.channel.permissionOverwrites.set(permissions);
 
       // Modify db
       const ticketsCollection = new model("tickets", TicketSchema);

@@ -1,4 +1,4 @@
-const { EmbedBuilder, Colors } = require("discord.js");
+const { EmbedBuilder, Colors, PermissionsBitField } = require("discord.js");
 const { model } = require("mongoose");
 const SettingSchema = require("../../Schemas/SettingSchema");
 const TicketSchema = require("../../Schemas/TicketSchema");
@@ -125,5 +125,27 @@ module.exports = {
 
     await interaction.update({ embeds: [ticketEmbed], components: [] });
     await interaction.channel.setParent(category.id);
+
+    // Fix permissions
+    const permissions = [
+      {
+        id: interaction.guild.id,
+        deny: [PermissionsBitField.Flags.ViewChannel],
+      },
+      {
+        id: settings.data.ticketRole,
+        allow: [PermissionsBitField.Flags.ViewChannel],
+      },
+    ];
+    ticket.canView.forEach(async (user) => {
+      const userExist = interaction.guild.members.fetch(user).catch(() => {});
+      if (userExist)
+        permissions.push({
+          id: user,
+          allow: [PermissionsBitField.Flags.ViewChannel],
+        });
+    });
+
+    await interaction.channel.permissionOverwrites.set(permissions);
   },
 };
