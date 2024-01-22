@@ -1,0 +1,7 @@
+# useless folders
+/.vscode
+/node_modules
+
+# config files
+config.json
+.env
